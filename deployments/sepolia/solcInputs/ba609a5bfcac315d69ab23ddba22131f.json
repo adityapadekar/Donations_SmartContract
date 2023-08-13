@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/Donations.sol": {
+      "content": "// SPDX-License-Identifier: UNLICENSED\npragma solidity ^0.8.9;\n\nerror Donations__InvalidDeadline();\nerror Donations__DonationFailed();\n\ncontract Donations {\n    struct Campaign {\n        address i_owner;\n        string title;\n        uint256 deadline;\n        string description;\n        uint256 target;\n        uint256 amountCollected;\n        string image;\n        address[] donators;\n        uint256[] donations;\n    }\n\n    uint256 private s_numberOfCampaigns;\n\n    mapping(uint256 => Campaign) campaigns;\n\n    constructor() {\n        s_numberOfCampaigns = 0;\n    }\n\n    function createCampaign(\n        address _owner,\n        string memory _title,\n        string memory _description,\n        uint256 _target,\n        uint256 _deadline,\n        string memory _image\n    ) public {\n        if (_deadline < block.timestamp) revert Donations__InvalidDeadline();\n\n        Campaign memory campaign = campaigns[s_numberOfCampaigns];\n\n        campaign.i_owner = _owner;\n        campaign.title = _title;\n        campaign.description = _description;\n        campaign.target = _target;\n        campaign.deadline = _deadline;\n        campaign.image = _image;\n        campaign.amountCollected = 0;\n\n        s_numberOfCampaigns++;\n    }\n\n    function donateCampaign(uint256 _id) public payable {\n        uint256 amount = msg.value;\n\n        Campaign storage campaign = campaigns[_id];\n\n        campaign.donations.push(amount);\n        campaign.donators.push(msg.sender);\n\n        (bool sent, ) = payable(campaign.i_owner).call{value: amount}(\"\");\n\n        if (sent) campaign.amountCollected += amount;\n        else revert Donations__DonationFailed();\n    }\n\n    function getNumberOfCampaigns() public view returns (uint256) {\n        return s_numberOfCampaigns;\n    }\n\n    function getDonatorsAndDonations(\n        uint256 _id\n    ) public view returns (address[] memory, uint256[] memory) {\n        return (campaigns[_id].donators, campaigns[_id].donations);\n    }\n\n    function getAllCampaigns() public view returns (Campaign[] memory) {\n        Campaign[] memory allCampaigns = new Campaign[](s_numberOfCampaigns);\n\n        for (uint256 i = 0; i < s_numberOfCampaigns; i++) {\n            allCampaigns[i] = campaigns[i];\n        }\n\n        return allCampaigns;\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
